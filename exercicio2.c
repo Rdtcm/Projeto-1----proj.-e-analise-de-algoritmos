@@ -2,7 +2,7 @@
 #include <ctype.h>
 
 int main(void) {
-    char entrada[100] = "a7-b5-a10";
+    char entrada[100] = "a6-b15-c1-d1";
 
     // printf("Informe a entrada que sera descompactada: ");
     // scanf("%99s", entrada);

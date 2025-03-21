@@ -3,7 +3,7 @@
 
 
 int main(void) {
-    char entrada[100] = "aaaaaaabbbbbaaaaaaaaaa";
+    char entrada[100] = "abcabc";
     // saida: "a7-b5-a10"
     int contador = 1;
 
