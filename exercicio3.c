@@ -1,181 +1,140 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 
-char* substring(const char* str, int comeco, int fim) {
-    // verificando se os indices fornecidos sao validos
-    if (comeco < 0 || fim <= comeco || fim > strlen(str)) {
-        return NULL;
-    }
+#define MAX 256
 
-    int tamanho = fim - comeco;
-    // alocando memoria para a substring, o + 1 e por causa do '\0'
-    char* substring = (char*)malloc(tamanho + 1);
 
-    // validando a alocacao de memoria para a substring
-    if (substring == NULL) {
-        return NULL;
-    }
+typedef struct {
+    char *str;
+    int tamanho;
+} String;
 
-    // colocando os dados na substring
-    for (int i = 0; i < tamanho; i++) {
-        substring[i] = str[comeco + i];
-    }
 
-    // colocando o caractere de '\0'
-    substring[tamanho] = '\0';
-
-    return substring;
+String criarString(const char *str) {
+    String s;
+    s.tamanho = strlen(str);
+    s.str = (char*)malloc((s.tamanho + 1) * sizeof(char));
+    strcpy(s.str, str);
+    return s;
 }
 
-char* replace(char* str, const char* velhaStr, const char* novaStr) {
-    int tamanhoStr = strlen(str);
-    int tamanhoStrVelha = strlen(velhaStr);
-    int tamanhoStrNova = strlen(novaStr);
+// liberando a memória alocada para uma string
+void liberarString(String *s) {
+    free(s->str);
+}
 
-    int tamanhoMaximoNovaStr = tamanhoStr;
-    // encontrando o tamanho maximo d nova string para alocar memoria
-    for (int i = 0; i < tamanhoStr; i++) {
-        // encontrando a substring
-        if (strncmp(&str[i], velhaStr, tamanhoStrVelha) == 0) {
-            tamanhoMaximoNovaStr += tamanhoStrNova - tamanhoStrVelha;
-            i += tamanhoStrVelha - 1;
-        }
-    }
+// função para substituir todas as ocorrências da substring em s->str por '_' (mantendo o mesmo comprimento)
+void substituirSubstring(String *s, const char *candidato) {
+    int len = strlen(candidato);
+    // cria uma nova string para armazenar o resultado da substituição
+    char novaStr[MAX] = "";
+    int i = 0;
+    while(i < s->tamanho) {
 
-    // alocando o espaco de memoria necessario
-    char* resultado = (char*)malloc(tamanhoMaximoNovaStr + 1);
-    int posicao = 0;
+        if(i <= s->tamanho - len && strncmp(s->str + i, candidato, len) == 0) {
 
-    for (int i = 0; i < tamanhoStr; i++) {
-        // encontrando a substring
-        if (strncmp(&str[i], velhaStr, tamanhoStrVelha) == 0) {
-            // colocando a nova string
-            strcpy(&resultado[posicao], novaStr);
-
-            posicao += tamanhoStrNova;
-            i += tamanhoStrVelha - 1;
+            for (int j = 0; j < len; j++) {
+                strncat(novaStr, "_", 1);
+            }
+            i += len;
         } else {
-            // copiando o caractere para a nova string
-            resultado[posicao++] = str[i];
+
+            int lenNova = strlen(novaStr);
+            novaStr[lenNova] = s->str[i];
+            novaStr[lenNova+1] = '\0';
+            i++;
         }
     }
 
-    // colocando o \0 no final da string
-    resultado[posicao] = '\0';
-    return resultado;
+    strcpy(s->str, novaStr);
+    s->tamanho = strlen(novaStr);
 }
 
-int contains(char* str, char caractere) {
-    int tamanhoStr = strlen(str);
-
-    for(int i = 0; i < tamanhoStr; i++) {
-        // verificando se o caractere esta na string
-        if (str[i] == caractere) {
-            return 0; // tem o caractere 
+// função para contar quantas vezes a substring candidato aparece em s->str
+int contarOcorrencias(String *s, const char *candidato) {
+    int count = 0;
+    int len = strlen(candidato);
+    for (int i = 0; i <= s->tamanho - len; i++) {
+        char trecho[MAX] = "";
+        strncpy(trecho, s->str + i, len);
+        trecho[len] = '\0';
+        if(strcmp(candidato, trecho) == 0) {
+            count++;
         }
     }
-    return 1;
+    return count;
+}
+
+void removerUnderscores(const char *orig, char *dest) {
+    int j = 0;
+    for (int i = 0; orig[i] != '\0'; i++) {
+        if(orig[i] != '_') {
+            dest[j++] = orig[i];
+        }
+    }
+    dest[j] = '\0';
+}
+
+void comprimirString(String *s) {
+    char resultado[MAX] = "";
+
+    for (int i = 1; i < s->tamanho; i++) {
+        for (int k = 0; k < i; k++) {
+
+            int tamanhoSubstr = i - k;
+            char candidato[MAX] = "";
+            strncpy(candidato, s->str + k, tamanhoSubstr);
+            candidato[tamanhoSubstr] = '\0';
+            
+            // se o candidato contém "_" entao pula
+            if (strchr(candidato, '_') != NULL)
+                continue;
+            
+            if(i + tamanhoSubstr <= s->tamanho) {
+                char test2[MAX] = "";
+                strncpy(test2, s->str + i, tamanhoSubstr);
+                test2[tamanhoSubstr] = '\0';
+                
+                if(strcmp(candidato, test2) == 0) {
+                    // Conta quantas vezes o candidato aparece em s->str
+                    int cont = contarOcorrencias(s, candidato);
+                    
+                    substituirSubstring(s, candidato);
+                    
+                    char prefixo[MAX] = "";
+                    strncpy(prefixo, s->str, i);
+                    prefixo[i] = '\0';
+                    char prefixoLimpo[MAX] = "";
+                    removerUnderscores(prefixo, prefixoLimpo);
+                    
+                    if(strlen(prefixoLimpo) > 0) {
+                        strcat(resultado, prefixoLimpo);
+                        strcat(resultado, "1");
+                    }
+                    
+                    // aadiciona a substring e sua contagem
+                    char buffer[MAX] = "";
+                    snprintf(buffer, MAX, "%s%d", candidato, cont);
+                    strcat(resultado, buffer);
+                }
+            }
+        }
+    }
+    printf("String compactada: %s\n", resultado);
 }
 
 int main() {
-    // char entrada[100] = "cacocacocaco";
-
-    char* entrada = (char*)malloc(100 * sizeof(char));
-
-    printf("Digite a entrada: ");
-    fgets(entrada, 100, stdin); // le somente 99 caracteres e nao preciso fazer verificacao
-    
-    // alocando espaco suficiente para a string final
-    char* strFinal = (char*)malloc(100 * sizeof(char));
-    strFinal[0] = '\0';  // colocando o \0
-
-    int count = 0;
-
-    int tamanho = 0;
-    char* substr1;
-    char* substr2;
-    char* substr3;
-    char* check;
-    char* mudar = (char*)malloc(strlen(entrada)+1);
-
-    for (int i = 0; i < strlen(entrada); i++) {
-
-        for (int j = 0; j < i; j++) {
-            substr1 = substring(entrada, j, i);
-
-            tamanho = strlen(substr1);
-
-            if (i + tamanho > strlen(entrada)) {} 
-            else {
-                substr2 = substring(entrada, i, i + tamanho);
-            }
-
-            if (contains(substr1, '_') == 0) {}
-
-            else if (strcmp(substr1, substr2) == 0) {
-
-                for (int k = 0; k < strlen(entrada); k++) {
-
-                    if (k + strlen(substr1) > strlen(entrada)) {} else {
-                        substr3 = substring(entrada, k, k + strlen(substr1));
-
-                        if (strcmp(substr2, substr3) == 0) {
-                            count++;
-                        }
-                        free(substr3);
-                    }
-                }
-
-                for (int l = 0; l < strlen(substr2); l++) {
-                    strcat(mudar, "_");
-                }
-
-
-               
-
-                char *newEntrada = replace(entrada, substr2, mudar);
-                if (newEntrada == NULL) {
-                    printf("Erro na alocaco de memoria :(");
-                }
-
-
-                check = substring(entrada, 0, i);
-                if (check != NULL) {
-                    char *newCheck = replace(check, "_", "");
-                    free(check);
-                    check = newCheck;
-                }
-
-                if (check != NULL && check[0] == '\0') {
-                    strcat(strFinal, check);
-                    strcat(strFinal, "1");
-                    free(check);
-                }
-
-        
-                char countStr[100];
-                snprintf(countStr, sizeof(countStr), "%d", count);  // convertendo count para string
-
-                strcat(strFinal, substr2);
-                strcat(strFinal, countStr);
-    
-                count = 0;
-                mudar[0] = '\0';
-                
-            }
-            
-        }   
-
-        }
-
-    printf("%s\n", strFinal);
-
-    free(substr1);
-    free(substr2);
-    free(strFinal);  // Liberando a memória no final
-    free(mudar);
-
+    String input[100];
+    printf("Informe a entrada: ");
+    scanf("%s", input);
+    String entrada = criarString(input);
+    comprimirString(&entrada);
+    liberarString(&entrada);
     return 0;
 }
+
+
+
