@@ -1,3 +1,10 @@
+/*
+Nome:Renan Horochk de Andrade
+RA:10438120
+-------------------------------
+Nome:Ryan Vinicius Ledo
+RA:10352727
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
