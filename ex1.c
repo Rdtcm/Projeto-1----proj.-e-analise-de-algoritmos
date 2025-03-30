@@ -16,16 +16,17 @@ typedef struct {
 
 
 int main(void) {
-    char entrada[100] = "abcabc";
+    char entrada[100];
+    printf("Informe a entrada: ");
+    scanf("%99s", entrada);
     int tamanho = strlen(entrada);
     char *ptr_inicio = entrada;
     char *ptr_final = entrada;
 
     int contador = 1;
-
+    
     while (*ptr_final != '\0') {
         ptr_final++;
-
         if (*ptr_inicio == *ptr_final)
         {
             contador++;
